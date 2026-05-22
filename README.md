@@ -64,6 +64,28 @@ The rate limiter uses a fixed 1-minute window per `user_id` with a maximum of 5 
 
 `rejected_total` is cumulative across all windows for each user. When a user exceeds the current window limit, that counter increments and is not reset when the next window starts.
 
+### GET /stats response schema
+
+```json
+{
+  "users": {
+    "user-123": {
+      "accepted_current_window": 3,
+      "rejected_total": 1
+    }
+  },
+  "global": {
+    "total_accepted": 3,
+    "total_rejected": 1
+  }
+}
+```
+
+`accepted_current_window` resets to 0 when the window expires.
+`rejected_total` is cumulative and never resets.
+
+The `429 Too Many Requests` response does not include a `Retry-After` header or window reset time. In production, this would be added for client backoff.
+
 `POST /request` returns `201 Created` because the server accepts and records a new request event in memory. Even though there is no persistent database row, the accepted request is a newly created in-memory event for the purpose of rate-limit accounting.
 
 Production limitations:
@@ -81,6 +103,8 @@ Products and media are stored in separate maps. The `products` map contains comp
 
 Pagination uses `limit` and `offset` over an ordered `[]string` slice of product IDs. The slice preserves insertion order, and each page resolves those IDs back to product metadata.
 
+Pagination defaults: `limit=20`, `offset=0`. Maximum `limit` is capped at 100.
+
 URL validation rules:
 
 - URLs must start with `http://` or `https://`.
@@ -89,6 +113,12 @@ URL validation rules:
 - Empty string entries are rejected.
 
 Duplicate SKUs return `409 Conflict` with `{ "error": "sku already exists" }`, which clearly separates uniqueness conflicts from normal validation errors.
+
+Production limitations:
+
+- In-memory storage means all product and media data is lost on restart.
+- No full-text search; filtering and sorting would require PostgreSQL or Elasticsearch.
+- UUID generation uses `crypto/rand`; safe for single instance but a distributed ID strategy such as ULIDs would be better for multi-node sorted pagination.
 
 Production upgrade path:
 
