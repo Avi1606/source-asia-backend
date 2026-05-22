@@ -127,6 +127,3 @@ Production upgrade path:
 - Store actual files in object storage behind a CDN.
 - Add a unique index on the `sku` column.
 
-## 4. AI Usage
-
-Codex / AI tooling was used to scaffold and implement this project.
