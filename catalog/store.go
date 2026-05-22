@@ -64,8 +64,8 @@ func (s *CatalogStore) CreateProduct(name, sku string, imageURLs, videoURLs []st
 		CreatedAt:  time.Now().UTC(),
 	}
 	media := &ProductMedia{
-		ImageURLs: append([]string(nil), imageURLs...),
-		VideoURLs: append([]string(nil), videoURLs...),
+		ImageURLs: cloneStrings(imageURLs),
+		VideoURLs: cloneStrings(videoURLs),
 	}
 
 	s.products[id] = product
@@ -130,12 +130,22 @@ func (s *CatalogStore) AddMedia(id string, imageURLs, videoURLs []string) (Produ
 
 func copyMedia(media *ProductMedia) ProductMedia {
 	if media == nil {
-		return ProductMedia{}
+		return ProductMedia{
+			ImageURLs: []string{},
+			VideoURLs: []string{},
+		}
 	}
 	return ProductMedia{
-		ImageURLs: append([]string(nil), media.ImageURLs...),
-		VideoURLs: append([]string(nil), media.VideoURLs...),
+		ImageURLs: cloneStrings(media.ImageURLs),
+		VideoURLs: cloneStrings(media.VideoURLs),
 	}
+}
+
+func cloneStrings(values []string) []string {
+	if len(values) == 0 {
+		return []string{}
+	}
+	return append([]string(nil), values...)
 }
 
 func newUUIDV4() (string, error) {
