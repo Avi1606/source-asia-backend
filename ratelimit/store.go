@@ -59,9 +59,14 @@ func (s *RateLimitStore) Stats() map[string]UserState {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	now := time.Now().UTC()
 	snapshot := make(map[string]UserState, len(s.users))
 	for userID, state := range s.users {
-		snapshot[userID] = *state
+		userState := *state
+		if now.After(state.WindowStart.Add(WindowSize)) {
+			userState.AcceptedCount = 0
+		}
+		snapshot[userID] = userState
 	}
 	return snapshot
 }

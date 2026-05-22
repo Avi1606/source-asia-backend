@@ -62,6 +62,10 @@ func (h *Handler) HandleRequest(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "user_id is required and must be non-empty"})
 		return
 	}
+	if len(body.Payload) == 0 {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "payload is required"})
+		return
+	}
 
 	if !h.store.Allow(userID) {
 		writeJSON(w, http.StatusTooManyRequests, requestRejectedResponse{
